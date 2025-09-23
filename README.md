@@ -1,4 +1,8 @@
 
+
+https://github.com/user-attachments/assets/fa884c0b-531b-43d7-8425-928a3599cf39
+
+
 # 🧑‍指揮 Orchestrator Node (Multi-Group & Auto-Discovery) for ComfyUI
 
 An advanced, "zero-configuration" custom node for ComfyUI, designed to manage complex and modular workflows.
