@@ -17,8 +17,8 @@ class OrchestratorNode:
         return ()
         
 class OrchestratorNodeMuter:
-    NAME = "OrchestratorNode Muter"
-    DISPLAY_NAME = "Orchestrator (Workflow Switch)"
+    NAME = "OrchestratorNode autoconfig"
+    DISPLAY_NAME = "Orchestrator (auto config)"
     FUNCTION = "do_nothing"
     CATEGORY = "Logic"
     
@@ -36,4 +36,4 @@ class OrchestratorNodeMuter:
 
 # Ces dictionnaires restent inchangés
 NODE_CLASS_MAPPINGS = { "OrchestratorNode": OrchestratorNode, "OrchestratorNodeMuter": OrchestratorNodeMuter }
-NODE_DISPLAY_NAME_MAPPINGS = { "OrchestratorNode": "OrchestratorNode", "OrchestratorNodeMuter": "OrchestratorNode Muter" }
+NODE_DISPLAY_NAME_MAPPINGS = { "OrchestratorNode": "OrchestratorNode", "OrchestratorNodeMuter": "OrchestratorNode autoconfig" }
