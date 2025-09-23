@@ -41,11 +41,22 @@ app.registerExtension({
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function () {
                 onNodeCreated?.apply(this, arguments);
-
-                // --- NEW LOGIC TO CREATE TOGGLES ---
+                if (!this.widgets) {
+                    this.widgets = [];
+                }
+                const topSpacer = {
+                    name: "top_spacer",
+                    type: "CUSTOM_SPACER",
+                    draw: () => {},
+                    computeSize: () => [0, 25] // [largeur, hauteur] en pixels
+                };
+                // Utilisez unshift pour l'ajouter en haut de la liste des widgets
+                this.widgets.push(topSpacer);
 
                 // This function ensures only one toggle is active at a time.
                 const handleToggleClick = (toggledWidgetName, isTurningOn) => {
+					
+					
                     if (!isTurningOn) {
                         // Prevent the user from turning off the last active toggle.
                         const thisWidget = this.widgets.find(w => w.name === toggledWidgetName);
