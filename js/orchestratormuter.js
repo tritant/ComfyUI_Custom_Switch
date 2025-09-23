@@ -3,12 +3,12 @@ import { app } from "/scripts/app.js";
 function updateNodeStates(selectedTag, groupID, workflowTags) {
     const changesToApply = [];
     for (const targetNode of app.graph.nodes) {
-        if (targetNode.type === "OrchestratorNodeToogle") continue;
+        if (targetNode.type === "OrchestratorNodeMuter") continue;
         const title = targetNode.title || "";
         const match = title.match(/\[\[(.*?):(.*?)\]\]/);
         if (match && match[1] === groupID) {
             const nodeTag = match[2];
-            const newMode = (selectedTag && nodeTag === selectedTag) ? 0 : 4;
+            const newMode = (selectedTag && nodeTag === selectedTag) ? 0 : 2;
             if (targetNode.mode !== newMode) {
                 changesToApply.push({ node: targetNode, mode: newMode });
             }
@@ -23,10 +23,10 @@ function updateNodeStates(selectedTag, groupID, workflowTags) {
 }
 
 app.registerExtension({
-    name: "Comfy.OrchestratorNodeToogle.JSOnlyUI",
+    name: "Comfy.OrchestratorNodeMuter.Groups.Mute",
 
     beforeRegisterNodeDef(nodeType, nodeData, app) {
-        if (nodeData.name === "OrchestratorNodeToogle") {
+        if (nodeData.name === "OrchestratorNodeMuter") {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function () {
                 onNodeCreated?.apply(this, arguments);
@@ -73,11 +73,11 @@ app.registerExtension({
                     const firstWidget = this.widgets.find(w => w.name === WORKFLOW_TAGS[0]);
                     if (firstWidget) {
                         firstWidget.value = true;
-                        setTimeout(() => { updateNodeStates(firstWidget.name, groupID, WORKFLOW_TAGS); }, 200);
+                        setTimeout(() => { updateNodeStates(firstWidget.name, groupID, WORKFLOW_TAGS); }, 0);
                     }
                 };
 
-                 const groupIDWidget = this.addWidget(
+                const groupIDWidget = this.addWidget(
                     "STRING",
                     "group_id",
                     "DEFAULT",
