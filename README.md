@@ -20,34 +20,6 @@ This is perfect for quickly switching between different models (e.g., SDXL, SD1.
 
 -----
 
-## 💾 Installation
-
-1.  Open a terminal and navigate to your ComfyUI installation folder.
-2.  Go to the custom nodes directory:
-    ```bash
-    cd ComfyUI/custom_nodes/
-    ```
-3.  Clone this repository:
-    ```bash
-    git clone https://YOUR_GITHUB_URL_HERE.git
-    ```
-4.  Restart ComfyUI.
-
-#### Manual Installation
-
-1.  Create a folder named `OrchestratorNode` inside `ComfyUI/custom_nodes/`.
-2.  Place the files from this repository inside, matching the following structure:
-    ```
-    OrchestratorNode/
-    ├── __init__.py
-    ├── orchestrator.py
-    └── js/
-        └── orchestrator.js
-    ```
-3.  Restart ComfyUI.
-
------
-
 ## 🚀 Usage
 
 Using the node is a simple two-step process:
