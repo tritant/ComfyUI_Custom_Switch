@@ -1,7 +1,7 @@
 [project]
 name = "ComfyUI_Custom_Switch"
 description = "It allows you to control complex graphs by activating and bypassing entire groups of nodes from a single dropdown menu."
-version = "1.0.0"
+version = "1.0.1"
 license = { file = "LICENSE.txt" }
 
 [project.urls]
@@ -11,6 +11,7 @@ Repository = "https://github.com/tritant/ComfyUI_Custom_Switch"
 PublisherId = "tritant"
 DisplayName = "Custom Switch"
 Icon = ""
+
 
 
 
