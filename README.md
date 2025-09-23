@@ -1,3 +1,9 @@
+
+
+https://github.com/user-attachments/assets/ab26685b-a0d8-45b9-aa1c-c44fcc136c43
+
+
+
 # 🧑‍指揮 Orchestrator Node (Auto-Discovery) for ComfyUI
 
 A "zero-configuration" custom node for ComfyUI that acts as an intelligent workflow switch. It automatically scans your graph for special tags (`[[TAG]]`) and creates a control interface with toggles to activate or deactivate groups of nodes on the fly.
