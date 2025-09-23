@@ -1,20 +1,15 @@
 import { app } from "/scripts/app.js";
 
-// La fonction updateNodeStates reste la même
-function updateNodeStates(selectedWorkflow, workflowTags) {
+// La fonction updateNodeStates reste inchangée
+function updateNodeStates(selectedTag, groupID, workflowTags) {
     const changesToApply = [];
     for (const targetNode of app.graph.nodes) {
         if (targetNode.type === "OrchestratorNodeMuter") continue;
         const title = targetNode.title || "";
-        let isTaggedNode = false;
-        for (const tag of workflowTags) {
-            if (title.startsWith(`[[${tag}]]`)) {
-                isTaggedNode = true;
-                break;
-            }
-        }
-        if (isTaggedNode) {
-            const newMode = (selectedWorkflow && title.startsWith(`[[${selectedWorkflow}]]`)) ? 0 : 4;
+        const match = title.match(/\[\[(.*?):(.*?)\]\]/);
+        if (match && match[1] === groupID) {
+            const nodeTag = match[2];
+            const newMode = (selectedTag && nodeTag === selectedTag) ? 0 : 4;
             if (targetNode.mode !== newMode) {
                 changesToApply.push({ node: targetNode, mode: newMode });
             }
@@ -29,9 +24,7 @@ function updateNodeStates(selectedWorkflow, workflowTags) {
 }
 
 app.registerExtension({
-    name: "Comfy.OrchestratorNodeMuter.AutoDiscovery.Final",
-
-    // La fonction 'setup' a été entièrement supprimée.
+    name: "Comfy.OrchestratorNodeMuter.JSOnlyUI",
 
     beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeData.name === "OrchestratorNodeMuter") {
@@ -39,22 +32,23 @@ app.registerExtension({
             nodeType.prototype.onNodeCreated = function () {
                 onNodeCreated?.apply(this, arguments);
 
-                this.discoverAndBuildUI = () => {
-                    if(this.widgets?.length > 0) {
-                        this.widgets.length = 0;
-                    }
+                const discoverAndBuildUI = () => {
+                    const groupID = groupIDWidget.value;
+                    if (!groupID) return;
+
+                    // On nettoie les anciens widgets (sauf le champ group_id lui-même)
+                    this.widgets = this.widgets.filter(w => w.name === "group_id");
                     
                     const discoveredTags = new Set();
-                    const regex = /\[\[(.*?)\]\]/g; 
+                    const regex = /\[\[(.*?):(.*?)\]\]/g;
 
                     for (const node of app.graph.nodes) {
                         if (node.title) {
-                            const matches = node.title.match(regex);
-                            if (matches) {
-                                matches.forEach(match => {
-                                    const tag = match.substring(2, match.length - 2);
-                                    discoveredTags.add(tag);
-                                });
+                            const allMatches = [...node.title.matchAll(regex)];
+                            for (const match of allMatches) {
+                                if (match[1] === groupID) {
+                                    discoveredTags.add(match[2]);
+                                }
                             }
                         }
                     }
@@ -64,17 +58,14 @@ app.registerExtension({
 
                     this.widgets.push({ name: "top_spacer", type: "CUSTOM_SPACER", draw: () => {}, computeSize: () => [0, 10] });
 
-                    const handleToggleClick = (toggledWidgetName, isTurningOn) => {
-                        let newSelectedWorkflow = null;
-                        if (isTurningOn) {
-                            newSelectedWorkflow = toggledWidgetName;
-                            for (const w of this.widgets) {
-                                if (WORKFLOW_TAGS.includes(w.name) && w.name !== toggledWidgetName) { 
-                                    w.value = false;
-                                }
+                    const handleToggleClick = (toggledTagName, isTurningOn) => {
+                        let newSelectedTag = isTurningOn ? toggledTagName : null;
+                        for (const w of this.widgets) {
+                            if (WORKFLOW_TAGS.includes(w.name) && w.name !== toggledTagName) { 
+                                w.value = false;
                             }
                         }
-                        setTimeout(() => { updateNodeStates(newSelectedWorkflow, WORKFLOW_TAGS); }, 0);
+                        setTimeout(() => { updateNodeStates(newSelectedTag, groupID, WORKFLOW_TAGS); }, 0);
                     };
 
                     for (const tag of WORKFLOW_TAGS) {
@@ -84,14 +75,20 @@ app.registerExtension({
                     const firstWidget = this.widgets.find(w => w.name === WORKFLOW_TAGS[0]);
                     if (firstWidget) {
                         firstWidget.value = true;
-                        setTimeout(() => { updateNodeStates(firstWidget.name, WORKFLOW_TAGS); }, 0);
+                        setTimeout(() => { updateNodeStates(firstWidget.name, groupID, WORKFLOW_TAGS); }, 200);
                     }
                 };
+
+                // On crée le champ de texte 'group_id' directement ici
+                const groupIDWidget = this.addWidget(
+                    "STRING",
+                    "group_id",
+                    "DEFAULT", // Valeur par défaut
+                    discoverAndBuildUI // Le scan est déclenché quand on modifie ce champ
+                );
                 
-                // On retarde le premier scan pour laisser le temps au graphe de se charger.
-                setTimeout(() => {
-                    this.discoverAndBuildUI();
-                }, 100); // Un délai de 100ms est généralement suffisant.
+                // On lance un premier scan au chargement
+                setTimeout(() => discoverAndBuildUI(), 100);
             };
         }
     },
