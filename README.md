@@ -1,64 +1,49 @@
-# ComfyUI_Custom_Switch
+# 🧑‍指揮 Orchestrator Node (Auto-Discovery) for ComfyUI
 
-https://github.com/user-attachments/assets/282dfdc3-9562-4ef0-a9d8-01c35508c272
+A "zero-configuration" custom node for ComfyUI that acts as an intelligent workflow switch. It automatically scans your graph for special tags (`[[TAG]]`) and creates a control interface with toggles to activate or deactivate groups of nodes on the fly.
 
-
------
-
-# 🧑‍指揮 Orchestrator Node for ComfyUI
-
-A custom node for ComfyUI that acts as a "Workflow Switch" or "Orchestrator". It allows you to control complex graphs by activating and bypassing entire groups of nodes from a single dropdown menu or toogle.
-
-This is perfect for quickly switching between different models (e.g., SDXL, SD1.5, Flux), LoRA configurations, or any other workflow variation without manual rewiring.
-
-## ✨ Features
-
-  * **Centralized Control:** Manage multiple workflow branches from a single node.
-  * **Tagging System:** Organize your nodes into logical groups by adding a simple `[TAG]` to their titles.
-  * **Dynamic Activation/Bypass:** Activate one group of nodes while automatically bypassing the others.
-  * **Flexibility:** Untagged nodes are treated as "common" and are never affected.
-  * **Easy to Customize:** The list of available workflows in the menu can be easily edited in one configuration file.
+No more config files or manual lists\! Just tag your nodes, and the Orchestrator does the rest.
 
 -----
 
-## 🚀 Usage
+## \#\# ✨ Features
 
-Using the node is a simple two-step process:
+  * **Automatic Discovery:** Detects workflow groups based on your node titles.
+  * **Zero-Configuration:** No `config.json` files or lists to manage. Just tag and go.
+  * **Dynamic Interface:** Automatically creates toggle switches for each unique group detected.
+  * **Exclusive Control:** Only one group can be active at a time (radio button behavior).
+  * **Common Nodes Ignored:** Untagged nodes always remain active and are unaffected.
 
-### Step 1: Tag Your Nodes
+-----
 
-For each node you want to assign to a group, edit its title to include a tag in brackets at the beginning.
+## \#\# 🚀 Usage
+
+The workflow is designed to be as simple and intuitive as possible.
+
+### Step 1: Tag Your Nodes with Double Brackets
+
+For each node you want to assign to a group, edit its title to include a tag surrounded by **double brackets** `[[...]]`.
 
   * **Example:**
-      * Rename your SDXL KSampler to `[SDXL] KSampler`.
-      * Rename your Flux model loader to `[FLUX] Checkpoint Loader`.
-      * Rename your Qwen positive prompt to `[QWEN] Positive Prompt`.
+      * Rename your SDXL KSampler to `[[SDXL]] KSampler`.
+      * Rename your Flux checkpoint loader to `[[FLUX]] Checkpoint Loader`.
+      * Common nodes like `Save Image` should not have a tag.
 
-Nodes without a tag (like a `Save Image` at the end) will always remain active.
-
-### Step 2: Add and Use the Orchestrator Node
+### Step 2: Add the Orchestrator Node
 
 1.  Right-click on the canvas \> `Add Node`.
-2.  Go to the `Logic` category and select `Orchestrator (Workflow Switch)`.
-3.  Use the dropdown menu on this new node to choose the workflow you want to activate.
+2.  Go to the `Logic` category and select `Orchestrator (Auto-Discovery)`.
 
-By selecting `[FLUX]`, all nodes starting with `[SDXL]` or `[QWEN]` will automatically be bypassed, and vice-versa.
+### Step 3: The Node Configures Itself
+
+As soon as you add the node, it will scan your workflow, find all unique tags (`[[SDXL]]`, `[[FLUX]]`, etc.), and automatically create a toggle switch for each one. The first toggle found will be enabled by default.
+
+### Updating the Interface
+
+If you add, remove, or modify tags in your workflow while the Orchestrator node is already present, simply **reload the node** The node will perform a new scan and update its interface with the correct toggles.
 
 -----
 
-## 🔧 Customization
+## \#\# How It Works
 
-The list of tags that appear in the dropdown menu is easy to modify.
-
-1.  Open the file: `ComfyUI/custom_nodes/OrchestratorNode/js/orchestrator.js`.
-2.  Edit the `WORKFLOW_TAGS` array at the top of the file to add, remove, or rename your tags.
-
-<!-- end list -->
-
-```javascript
-// Edit this list to change the menu options.
-const WORKFLOW_TAGS = ["FLUX", "QWEN", "WAN2.2", "SDXL", "SD1.5"];
-```
-
-Save the file, hard-refresh the ComfyUI interface, and the menu will be updated.
-
+On load, the node's script iterates through all other nodes in your graph. It uses a regular expression to find any titles containing a tag in the `[[...]]` format. It then compiles a list of all unique tags found and builds its interface by creating a toggle switch for each one.
