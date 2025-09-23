@@ -1,16 +1,17 @@
 [project]
-name = "ComfyUI-Layers-Utility"
-description = "This custom node for ComfyUI provides a powerful and flexible dynamic layering system, similar to what you would find in image editing software like Photoshop."
-version = "3.1.1"
+name = "ComfyUI_Custom_Switch"
+description = "It allows you to control complex graphs by activating and bypassing entire groups of nodes from a single dropdown menu."
+version = "1.0.0"
 license = { file = "LICENSE.txt" }
 
 [project.urls]
-Repository = "https://github.com/tritant/ComfyUI_Layers_Utility"
+Repository = "https://github.com/tritant/ComfyUI_Custom_Switch"
 
 [tool.comfy]
 PublisherId = "tritant"
-DisplayName = "Layers System"
+DisplayName = "Custom Switch"
 Icon = ""
+
 
 
 
