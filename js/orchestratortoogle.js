@@ -67,7 +67,7 @@ app.registerExtension({
                     const WORKFLOW_TAGS = Array.from(discoveredTags);
                     if (WORKFLOW_TAGS.length === 0) return;
 
-                    this.widgets.push({ name: "top_spacer", type: "CUSTOM_SPACER", draw: () => {}, computeSize: () => [0, 10] });
+                    this.widgets.push({ name: "top_spacer", type: "CUSTOM_SPACER", draw: () => {}, computeSize: () => [0, 25] });
 
                     // --- LOGIQUE MODIFIÉE ---
                     const handleToggleClick = (toggledWidgetName, isTurningOn) => {
