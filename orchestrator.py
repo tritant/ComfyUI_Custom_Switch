@@ -1,21 +1,34 @@
 class OrchestratorNodeMuter:
-    NAME = "OrchestratorNode autoconfig"
-    DISPLAY_NAME = "Orchestrator (auto config)"
+    NAME = "OrchestratorNode Muter autoconfig"
+    DISPLAY_NAME = "Orchestrator Muter (auto config)"
     FUNCTION = "do_nothing"
     CATEGORY = "Logic"
     
     @classmethod
     def INPUT_TYPES(cls):
-        # Le widget est maintenant 100% géré par le JavaScript.
         return { "required": {} }
 
     RETURN_TYPES = ()
     OUTPUT_NODE = True
 
-    # La fonction n'a plus besoin d'argument.
+    def do_nothing(self):
+        return ()    
+
+class OrchestratorNodeToogle:
+    NAME = "OrchestratorNode Bypass autoconfig"
+    DISPLAY_NAME = "Orchestrator Bypass (auto config)"
+    FUNCTION = "do_nothing"
+    CATEGORY = "Logic"
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return { "required": {} }
+
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+
     def do_nothing(self):
         return ()        
 
-# Ces dictionnaires restent inchangés
-NODE_CLASS_MAPPINGS = { "OrchestratorNodeMuter": OrchestratorNodeMuter }
-NODE_DISPLAY_NAME_MAPPINGS = { "OrchestratorNodeMuter": "OrchestratorNode autoconfig" }
+NODE_CLASS_MAPPINGS = { "OrchestratorNodeToogle": OrchestratorNodeToogle, "OrchestratorNodeMuter": OrchestratorNodeMuter }
+NODE_DISPLAY_NAME_MAPPINGS = { "OrchestratorNodeToogle": "OrchestratorNode Bypass autoconfig", "OrchestratorNodeMuter": "OrchestratorNode Muter autoconfig" }
