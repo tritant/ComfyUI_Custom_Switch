@@ -13,7 +13,11 @@ function updateNodeStates(selectedWorkflow, workflowTags) {
             }
         }
         if (isTaggedNode) {
-            const newMode = title.startsWith(`[[${selectedWorkflow}]]`) ? 0 : 4;
+            // --- LOGIQUE MODIFIÉE ---
+            // Si un workflow est sélectionné ET que c'est le bon, on active.
+            // Sinon (si aucun n'est sélectionné ou si c'est le mauvais tag), on bypasse.
+            const newMode = (selectedWorkflow && title.startsWith(`[[${selectedWorkflow}]]`)) ? 0 : 4;
+            
             if (targetNode.mode !== newMode) {
                 changesToApply.push({ node: targetNode, mode: newMode });
             }
@@ -35,13 +39,12 @@ app.registerExtension({
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function () {
                 onNodeCreated?.apply(this, arguments);
-				
-				if (!this.widgets) {
-                  this.widgets = [];
+			   
+			   if (!this.widgets) {
+                   this.widgets = [];
                 }
 
                 const discoverAndBuildUI = () => {
-                    // On nettoie les anciens widgets (tous sauf le premier s'il est permanent)
                     if(this.widgets?.length > 0) {
                         this.widgets.length = 0;
                     }
@@ -64,18 +67,24 @@ app.registerExtension({
                     const WORKFLOW_TAGS = Array.from(discoveredTags);
                     if (WORKFLOW_TAGS.length === 0) return;
 
-                    this.widgets.push({ name: "top_spacer", type: "CUSTOM_SPACER", draw: () => {}, computeSize: () => [0, 25] });
+                    this.widgets.push({ name: "top_spacer", type: "CUSTOM_SPACER", draw: () => {}, computeSize: () => [0, 10] });
 
+                    // --- LOGIQUE MODIFIÉE ---
                     const handleToggleClick = (toggledWidgetName, isTurningOn) => {
-                        if (!isTurningOn) {
-                            const thisWidget = this.widgets.find(w => w.name === toggledWidgetName);
-                            if (thisWidget) thisWidget.value = true;
-                            return;
+                        let newSelectedWorkflow = null;
+
+                        if (isTurningOn) {
+                            // Si on active un interrupteur, on désactive les autres.
+                            newSelectedWorkflow = toggledWidgetName;
+                            for (const w of this.widgets) {
+                                if (WORKFLOW_TAGS.includes(w.name) && w.name !== toggledWidgetName) { 
+                                    w.value = false;
+                                }
+                            }
                         }
-                        for (const w of this.widgets) {
-                            if (WORKFLOW_TAGS.includes(w.name) && w.name !== toggledWidgetName) { w.value = false; }
-                        }
-                        setTimeout(() => { updateNodeStates(toggledWidgetName, WORKFLOW_TAGS); }, 0);
+                        // Si on désactive un interrupteur (isTurningOn = false), newSelectedWorkflow reste null.
+                        
+                        setTimeout(() => { updateNodeStates(newSelectedWorkflow, WORKFLOW_TAGS); }, 0);
                     };
 
                     for (const tag of WORKFLOW_TAGS) {
@@ -89,7 +98,6 @@ app.registerExtension({
                     }
                 };
                 
-                // On lance le scan au chargement du nœud.
                 discoverAndBuildUI();
             };
         }
