@@ -1,55 +1,55 @@
 
+# 🧑‍指揮 Orchestrator Node (Multi-Group & Auto-Discovery) for ComfyUI
 
-https://github.com/user-attachments/assets/ab26685b-a0d8-45b9-aa1c-c44fcc136c43
+An advanced, "zero-configuration" custom node for ComfyUI, designed to manage complex and modular workflows.
 
-
-
-# 🧑‍指揮 Orchestrator Node (Auto-Discovery) for ComfyUI
-
-A "zero-configuration" custom node for ComfyUI that acts as an intelligent workflow switch. It automatically scans your graph for special tags (`[[TAG]]`) and creates a control interface with toggles to activate or deactivate groups of nodes on the fly.
-
-No more config files or manual lists\! Just tag your nodes, and the Orchestrator does the rest.
+This node scans your graph for specific tags in the `[[GROUP:TAG]]` format and dynamically builds a control interface. It allows for the use of **multiple independent Orchestrator nodes** within the same workflow, each managing its own group of nodes, making it ideal for complex setups.
 
 -----
 
 ## \#\# ✨ Features
 
-  * **Automatic Discovery:** Detects workflow groups based on your node titles.
-  * **Zero-Configuration:** No `config.json` files or lists to manage. Just tag and go.
-  * **Dynamic Interface:** Automatically creates toggle switches for each unique group detected.
-  * **Exclusive Control:** Only one group can be active at a time (radio button behavior).
-  * **Common Nodes Ignored:** Untagged nodes always remain active and are unaffected.
+  * **Multi-Group Management:** Use multiple Orchestrator nodes, each controlling a subset of your workflow via a unique `Group ID`.
+  * **Automatic Discovery:** Automatically detects tags belonging to its group without any manual configuration.
+  * **Dynamic Interface:** Creates toggle switches on the fly for each tag detected within its group.
+  * **Exclusive Control:** Only one toggle can be active at a time within a single group.
+  * **Common Nodes Ignored:** Untagged nodes always remain active.
 
 -----
 
 ## \#\# 🚀 Usage
 
-The workflow is designed to be as simple and intuitive as possible.
+Operation is based entirely on how you name your nodes.
 
-### Step 1: Tag Your Nodes with Double Brackets
+### Step 1: Add an Orchestrator Node and Set Its Group
 
-For each node you want to assign to a group, edit its title to include a tag surrounded by **double brackets** `[[...]]`.
+  * Add the `Logic > Orchestrator (Auto-Discovery)` node to your graph.
+  * In the node's `group_id` field, enter a unique name for the group you want to control. For example: `MODELS`.
 
-  * **Example:**
-      * Rename your SDXL KSampler to `[[SDXL]] KSampler`.
-      * Rename your Flux checkpoint loader to `[[FLUX]] Checkpoint Loader`.
-      * Common nodes like `Save Image` should not have a tag.
+### Step 2: Tag Your Target Nodes
 
-### Step 2: Add the Orchestrator Node
+Use a double-bracket syntax `[[GROUP_ID:TAG_NAME]]` in the titles of the nodes you want to control.
 
-1.  Right-click on the canvas \> `Add Node`.
-2.  Go to the `Logic` category and select `Orchestrator (Auto-Discovery)`.
+  * **Example for the `MODELS` group:**
+      * Rename a KSampler to `[[MODELS:SDXL]] KSampler`.
+      * Rename another KSampler to `[[MODELS:PONY]] KSampler`.
 
-### Step 3: The Node Configures Itself
+### Step 3: The Node Updates
 
-As soon as you add the node, it will scan your workflow, find all unique tags (`[[SDXL]]`, `[[FLUX]]`, etc.), and automatically create a toggle switch for each one. The first toggle found will be enabled by default.
+After tagging your nodes, reload the node. The Orchestrator node with the ID `MODELS` will scan the graph, find the `SDXL` and `PONY` tags belonging to its group, and create the corresponding toggle switches.
 
-### Updating the Interface
+### Multi-Group Usage
 
-If you add, remove, or modify tags in your workflow while the Orchestrator node is already present, simply **reload the node** The node will perform a new scan and update its interface with the correct toggles.
+You can repeat the process to manage other parts of your workflow independently.
+
+1.  Add a **second Orchestrator node**.
+2.  Give it a different `group_id`, for example, `STYLES`.
+3.  Tag other nodes accordingly: `[[STYLES:Cinematic]]`, `[[STYLES:Anime]]`.
+
+The second node will create the `Cinematic` and `Anime` toggles and will only control those nodes, never interfering with the `MODELS` group.
 
 -----
 
 ## \#\# How It Works
 
-On load, the node's script iterates through all other nodes in your graph. It uses a regular expression to find any titles containing a tag in the `[[...]]` format. It then compiles a list of all unique tags found and builds its interface by creating a toggle switch for each one.
+On load, each Orchestrator node reads its own `Group ID`. It then iterates through all other nodes in the graph, looking for tags in the `[[GROUP:TAG]]` format. If a tag's `GROUP` matches the node's `Group ID`, it adds the `TAG` to its list of options and builds its UI accordingly. This ensures that each Orchestrator only manages the nodes explicitly assigned to it.
