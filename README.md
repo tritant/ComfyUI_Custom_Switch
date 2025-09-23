@@ -1,6 +1,7 @@
 # ComfyUI_Custom_Switch
 
-https://github.com/user-attachments/assets/3acbb283-325f-4369-a21b-5084ba3ec6e8
+https://github.com/user-attachments/assets/282dfdc3-9562-4ef0-a9d8-01c35508c272
+
 
 -----
 
