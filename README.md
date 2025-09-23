@@ -7,7 +7,7 @@ https://github.com/user-attachments/assets/282dfdc3-9562-4ef0-a9d8-01c35508c272
 
 # 🧑‍指揮 Orchestrator Node for ComfyUI
 
-A custom node for ComfyUI that acts as a "Workflow Switch" or "Orchestrator". It allows you to control complex graphs by activating and bypassing entire groups of nodes from a single dropdown menu.
+A custom node for ComfyUI that acts as a "Workflow Switch" or "Orchestrator". It allows you to control complex graphs by activating and bypassing entire groups of nodes from a single dropdown menu or toogle.
 
 This is perfect for quickly switching between different models (e.g., SDXL, SD1.5, Flux), LoRA configurations, or any other workflow variation without manual rewiring.
 
