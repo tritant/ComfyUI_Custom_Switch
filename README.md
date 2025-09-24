@@ -40,7 +40,7 @@ Use a double-bracket syntax `[[GROUP_ID:TAG_NAME]]` in the titles of the nodes y
 
 ### Step 3: The Node Updates
 
-After tagging your nodes, reload the node. The Orchestrator node with the ID `MODELS` will scan the graph, find the `SDXL` and `PONY` tags belonging to its group, and create the corresponding toggle switches.
+After tagging your nodes, click the scan button. The Orchestrator node with the ID `MODELS` will scan the graph, find the `SDXL` and `PONY` tags belonging to its group, and create the corresponding toggle switches.
 
 ### Multi-Group Usage
 
