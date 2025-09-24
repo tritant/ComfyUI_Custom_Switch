@@ -1,6 +1,6 @@
 
 
-https://github.com/user-attachments/assets/fa884c0b-531b-43d7-8425-928a3599cf39
+https://github.com/user-attachments/assets/d1795e9a-1ae9-46ec-aa01-8b1fb06481a9
 
 
 # 🧑‍指揮 Orchestrator Node (Multi-Group & Auto-Discovery) for ComfyUI
