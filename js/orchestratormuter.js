@@ -35,7 +35,7 @@ app.registerExtension({
                     const groupID = groupIDWidget.value;
                     if (!groupID) return;
 
-                    this.widgets = this.widgets.filter(w => w.name === "group_id" || w.name === "🔄 Scan for tag");
+                    this.widgets = this.widgets.filter(w => w.name === "group_id" || w.name === "🔄 Refresh");
                     
                     const discoveredTags = new Set();
                     const regex = /\[\[(.*?):(.*?)\]\]/g;
@@ -63,7 +63,7 @@ app.registerExtension({
                                 w.value = false;
                             }
                         }
-                        setTimeout(() => { updateNodeStates(newSelectedTag, groupID, WORKFLOW_TAGS); }, 0);
+                        setTimeout(() => { updateNodeStates(newSelectedTag, groupID, WORKFLOW_TAGS); }, 100);
                     };
 
                     for (const tag of WORKFLOW_TAGS) {
@@ -75,6 +75,8 @@ app.registerExtension({
                         firstWidget.value = true;
                         setTimeout(() => { updateNodeStates(firstWidget.name, groupID, WORKFLOW_TAGS); }, 0);
                     }
+					this.size = this.computeSize();
+					app.graph.setDirtyCanvas(true, true);
                 };
 
                 const groupIDWidget = this.addWidget(
@@ -83,7 +85,7 @@ app.registerExtension({
                     "DEFAULT",
                     discoverAndBuildUI
                 );
-                this.addWidget("button", "🔄 Scan for tag", null, discoverAndBuildUI);
+                this.addWidget("button", "🔄 Refresh", null, discoverAndBuildUI);
                 setTimeout(() => discoverAndBuildUI(), 100);
             };
         }
