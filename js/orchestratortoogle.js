@@ -35,7 +35,7 @@ app.registerExtension({
                     const groupID = groupIDWidget.value;
                     if (!groupID) return;
 
-                    this.widgets = this.widgets.filter(w => w.name === "group_id" || w.name === "🔄 Scan for new tag");
+                    this.widgets = this.widgets.filter(w => w.name === "group_id" || w.name === "🔄 Scan for tag");
                     
                     const discoveredTags = new Set();
                     const regex = /\[\[(.*?):(.*?)\]\]/g;
@@ -83,7 +83,7 @@ app.registerExtension({
                     "DEFAULT",
                     discoverAndBuildUI
                 );
-                this.addWidget("button", "🔄 Scan for new tag", null, discoverAndBuildUI);
+                this.addWidget("button", "🔄 Scan for tag", null, discoverAndBuildUI);
                 setTimeout(() => discoverAndBuildUI(), 100);
             };
         }
