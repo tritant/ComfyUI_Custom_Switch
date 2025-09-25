@@ -1,6 +1,6 @@
 
 
-https://github.com/user-attachments/assets/d1795e9a-1ae9-46ec-aa01-8b1fb06481a9
+https://github.com/user-attachments/assets/a5f4c5e7-eb4b-47db-b791-daf6755518b0
 
 
 # 🧑‍指揮 Orchestrator Node (Multi-Group & Auto-Discovery) for ComfyUI
@@ -40,7 +40,7 @@ Use a double-bracket syntax `[[GROUP_ID:TAG_NAME]]` in the titles of the nodes y
 
 ### Step 3: The Node Updates
 
-After tagging your nodes, click the scan button. The Orchestrator node with the ID `MODELS` will scan the graph, find the `SDXL` and `PONY` tags belonging to its group, and create the corresponding toggle switches.
+After tagging your nodes, the Orchestrator node with the ID `MODELS` will scan the graph, find the `SDXL` and `PONY` tags belonging to its group, and create the corresponding toggle switches.
 
 ### Multi-Group Usage
 
