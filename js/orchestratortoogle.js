@@ -5,12 +5,19 @@ function updateNodeStates(selectedTag, groupID, workflowTags) {
     for (const targetNode of app.graph.nodes) {
         if (targetNode.type === "OrchestratorNodeToogle") continue;
         const title = targetNode.title || "";
-        const match = title.match(/\[\[(.*?):(.*?)\]\]/);
-        if (match && match[1] === groupID) {
-            const nodeTag = match[2];
-            const newMode = (selectedTag && nodeTag === selectedTag) ? 0 : 4;
-            if (targetNode.mode !== newMode) {
-                changesToApply.push({ node: targetNode, mode: newMode });
+        const match = title.match(/\[\[(.*?):(.*?)\]\]/g);
+        if (match) {
+            for (const m of match) {
+                const parts = m.substring(2, m.length - 2).split(':');
+                const nodeGroupID = parts[0];
+                const nodeTag = parts[1];
+                if (nodeGroupID === groupID) {
+                    const newMode = (selectedTag && nodeTag === selectedTag) ? 0 : 4;
+                    if (targetNode.mode !== newMode) {
+                        changesToApply.push({ node: targetNode, mode: newMode });
+                    }
+                    break;
+                }
             }
         }
     }
@@ -23,7 +30,7 @@ function updateNodeStates(selectedTag, groupID, workflowTags) {
 }
 
 app.registerExtension({
-    name: "Comfy.OrchestratorNodeToogle.JSOnlyUI",
+    name: "Comfy.OrchestratorNodeToogle.Final.Flexible",
 
     beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeData.name === "OrchestratorNodeToogle") {
@@ -31,11 +38,16 @@ app.registerExtension({
             nodeType.prototype.onNodeCreated = function () {
                 onNodeCreated?.apply(this, arguments);
 
+                this.lastKnownNodeTitles = null;
+
                 const discoverAndBuildUI = () => {
+                    const groupIDWidget = this.widgets.find(w => w.name === "group_id");
+                    if (!groupIDWidget) return;
+
                     const groupID = groupIDWidget.value;
                     if (!groupID) return;
 
-                    this.widgets = this.widgets.filter(w => w.name === "group_id" || w.name === "🔄 Refresh");
+                    this.widgets = this.widgets.filter(w => w.name === "group_id");
                     
                     const discoveredTags = new Set();
                     const regex = /\[\[(.*?):(.*?)\]\]/g;
@@ -51,19 +63,29 @@ app.registerExtension({
                         }
                     }
 
-                    const WORKFLOW_TAGS = Array.from(discoveredTags);
-                    if (WORKFLOW_TAGS.length === 0) return;
+                    const WORKFLOW_TAGS = Array.from(discoveredTags).sort();
+                    
+                    if (WORKFLOW_TAGS.length === 0) {
+                        const currentWidth = this.size[0];
+                        const newComputedSize = this.computeSize();
+                        this.size = [currentWidth, newComputedSize[1]];
+                        return;
+                    }
 
                     this.widgets.push({ name: "top_spacer", type: "CUSTOM_SPACER", draw: () => {}, computeSize: () => [0, 10] });
 
-                    const handleToggleClick = (toggledTagName, isTurningOn) => {
+                     const handleToggleClick = (toggledTagName, isTurningOn) => {
                         let newSelectedTag = isTurningOn ? toggledTagName : null;
-                        for (const w of this.widgets) {
-                            if (WORKFLOW_TAGS.includes(w.name) && w.name !== toggledTagName) { 
-                                w.value = false;
+
+                        if (isTurningOn) {
+                            for (const w of this.widgets) {
+                                if (WORKFLOW_TAGS.includes(w.name) && w.name !== toggledTagName) { 
+                                    w.value = false;
+                                }
                             }
                         }
-                        setTimeout(() => { updateNodeStates(newSelectedTag, groupID, WORKFLOW_TAGS); }, 100);
+                        
+                        setTimeout(() => { updateNodeStates(newSelectedTag, groupID, WORKFLOW_TAGS); }, 0);
                     };
 
                     for (const tag of WORKFLOW_TAGS) {
@@ -73,20 +95,39 @@ app.registerExtension({
                     const firstWidget = this.widgets.find(w => w.name === WORKFLOW_TAGS[0]);
                     if (firstWidget) {
                         firstWidget.value = true;
-                        setTimeout(() => { updateNodeStates(firstWidget.name, groupID, WORKFLOW_TAGS); }, 200);
+                        setTimeout(() => { updateNodeStates(firstWidget.name, groupID, WORKFLOW_TAGS); }, 0);
                     }
-				    this.size = this.computeSize();
-					app.graph.setDirtyCanvas(true, true);
+                    
+                    const currentWidth = this.size[0];
+                    const newComputedSize = this.computeSize();
+                    this.size = [currentWidth, newComputedSize[1]];
+                    
+                    app.graph.setDirtyCanvas(true, true);
                 };
 
-                 const groupIDWidget = this.addWidget(
-                    "STRING",
-                    "group_id",
-                    "DEFAULT",
-                    discoverAndBuildUI
-                );
-                this.addWidget("button", "🔄 Refresh", null, discoverAndBuildUI);
+                const groupIDWidget = this.addWidget("STRING", "group_id", "DEFAULT", discoverAndBuildUI);
+                
                 setTimeout(() => discoverAndBuildUI(), 100);
+            };
+
+            const onDrawBackground = nodeType.prototype.onDrawBackground;
+            nodeType.prototype.onDrawBackground = function(ctx) {
+                onDrawBackground?.apply(this, arguments);
+
+                let titlesSignature = "";
+                for(const node of app.graph.nodes) {
+                    if(node.title?.includes('[[')) {
+                        titlesSignature += node.title;
+                    }
+                }
+                
+                if (this.lastKnownNodeTitles !== titlesSignature) {
+                    this.lastKnownNodeTitles = titlesSignature;
+                    const groupIDWidget = this.widgets.find(w => w.name === "group_id");
+                    if(groupIDWidget?.callback) {
+                        groupIDWidget.callback(groupIDWidget.value);
+                    }
+                }
             };
         }
     },
