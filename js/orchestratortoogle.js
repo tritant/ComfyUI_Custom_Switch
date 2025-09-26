@@ -47,6 +47,20 @@ app.registerExtension({
                     const groupID = groupIDWidget.value;
                     if (!groupID) return;
 
+                    let activeTagInGraph = null;
+                    const regexForScan = /\[\[(.*?):(.*?)\]\]/g;
+                    for (const node of app.graph.nodes) {
+                        if (node.mode === 0 && node.title) {
+                            for (const match of node.title.matchAll(regexForScan)) {
+                                if (match[1] === groupID) {
+                                    activeTagInGraph = match[2];
+                                    break;
+                                }
+                            }
+                        }
+                        if (activeTagInGraph) break;
+                    }
+                    
                     this.widgets = this.widgets.filter(w => w.name === "group_id");
                     
                     const discoveredTags = new Set();
@@ -74,28 +88,29 @@ app.registerExtension({
 
                     this.widgets.push({ name: "top_spacer", type: "CUSTOM_SPACER", draw: () => {}, computeSize: () => [0, 10] });
 
-                     const handleToggleClick = (toggledTagName, isTurningOn) => {
+                    const handleToggleClick = (toggledTagName, isTurningOn) => {
                         let newSelectedTag = isTurningOn ? toggledTagName : null;
 
                         if (isTurningOn) {
                             for (const w of this.widgets) {
-                                if (WORKFLOW_TAGS.includes(w.name) && w.name !== toggledTagName) { 
+                                if (WORKFLOW_TAGS.includes(w.name) && w.name !== toggledTagName) {
                                     w.value = false;
                                 }
                             }
                         }
                         
-                        setTimeout(() => { updateNodeStates(newSelectedTag, groupID, WORKFLOW_TAGS); }, 0);
+                        updateNodeStates(newSelectedTag, groupID, WORKFLOW_TAGS);
                     };
 
                     for (const tag of WORKFLOW_TAGS) {
                         this.addWidget("toggle", tag, false, (value) => { handleToggleClick(tag, value); });
                     }
 
-                    const firstWidget = this.widgets.find(w => w.name === WORKFLOW_TAGS[0]);
-                    if (firstWidget) {
-                        firstWidget.value = true;
-                        setTimeout(() => { updateNodeStates(firstWidget.name, groupID, WORKFLOW_TAGS); }, 0);
+                    if (activeTagInGraph) {
+                        const widgetToActivate = this.widgets.find(w => w.name === activeTagInGraph);
+                        if (widgetToActivate) {
+                            widgetToActivate.value = true;
+                        }
                     }
                     
                     const currentWidth = this.size[0];
@@ -107,7 +122,7 @@ app.registerExtension({
 
                 const groupIDWidget = this.addWidget("STRING", "group_id", "DEFAULT", discoverAndBuildUI);
                 
-                setTimeout(() => discoverAndBuildUI(), 100);
+                discoverAndBuildUI();
             };
 
             const onDrawBackground = nodeType.prototype.onDrawBackground;
