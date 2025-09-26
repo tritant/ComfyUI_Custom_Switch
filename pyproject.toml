@@ -1,7 +1,7 @@
 [project]
 name = "ComfyUI_Custom_Switch"
 description = "It allows you to control complex graphs by unbypass/unmute and bypass/mute entire groups of nodes, just by adding tags in the title of your nodes, no connection required."
-version = "1.5.0"
+version = "1.5.1"
 license = { file = "LICENSE.txt" }
 
 [project.urls]
@@ -11,6 +11,7 @@ Repository = "https://github.com/tritant/ComfyUI_Custom_Switch"
 PublisherId = "tritant"
 DisplayName = "Custom Switch"
 Icon = ""
+
 
 
 
