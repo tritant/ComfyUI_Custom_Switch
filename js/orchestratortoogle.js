@@ -2,17 +2,15 @@ import { app } from "/scripts/app.js";
 
 function getAllNodesInGraph() {
     const allNodes = [...app.graph._nodes];
-    
     if (app.graph._subgraphs) {
         for (const subgraph of app.graph._subgraphs.values()) {
-            //console.log(`[Orchestrator] Trouvé un Subgraph. Scan de ses ${subgraph.nodes.length} nœuds internes...`);
             allNodes.push(...subgraph.nodes);
         }
     }
     return allNodes;
 }
 
-function updateNodeStates(selectedTag, groupID, workflowTags) {
+function updateNodeStates(selection, groupID) {
     const changesToApply = [];
     const dirtyGraphs = new Set([app.graph]);
     for (const targetNode of getAllNodesInGraph()) {
@@ -25,12 +23,16 @@ function updateNodeStates(selectedTag, groupID, workflowTags) {
                 const nodeGroupID = parts[0];
                 const nodeTag = parts[1];
                 if (nodeGroupID === groupID) {
-                    const newMode = (selectedTag && nodeTag === selectedTag) ? 0 : 4;
+                    let shouldBeActive = false;
+                    if (Array.isArray(selection)) {
+                        shouldBeActive = selection.includes(nodeTag);
+                    } else {
+                        shouldBeActive = selection && nodeTag === selection;
+                    }
+                    const newMode = shouldBeActive ? 0 : 4;
                     if (targetNode.mode !== newMode) {
                         changesToApply.push({ node: targetNode, mode: newMode });
-                        if (targetNode.graph) {
-                            dirtyGraphs.add(targetNode.graph);
-                        }
+                        if (targetNode.graph) dirtyGraphs.add(targetNode.graph);
                     }
                     break;
                 }
@@ -49,7 +51,6 @@ function updateNodeStates(selectedTag, groupID, workflowTags) {
 
 app.registerExtension({
     name: "Comfy.OrchestratorNodeToogle.TheRealFinalVersion",
-
     beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeData.name === "OrchestratorNodeToogle") {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
@@ -58,92 +59,98 @@ app.registerExtension({
 
                 this.lastKnownNodeTitles = null;
 
- const discoverAndBuildUI = () => {
-    const groupIDWidget = this.widgets.find(w => w.name === "group_id");
-    if (!groupIDWidget) return;
+                // On utilise this.properties pour un état persistant
+                if (!this.properties) this.properties = {};
+                if (this.properties.show_settings === undefined) this.properties.show_settings = true;
+                if (this.properties.group_id === undefined) this.properties.group_id = "DEFAULT";
+                if (this.properties.node_mode === undefined) this.properties.node_mode = true;
 
-    const groupID = groupIDWidget.value;
-    if (!groupID) return;
-    
-    let activeTagInGraph = null;
-    const regexForScan = /\[\[(.*?):(.*?)\]\]/g;
-    // MODIFICATION N°1
-    for (const node of getAllNodesInGraph()) {
-        if (node.mode === 0 && node.title) {
-            for (const match of node.title.matchAll(regexForScan)) {
-                if (match[1] === groupID) {
-                    activeTagInGraph = match[2];
-                    break;
-                }
-            }
-        }
-        if (activeTagInGraph) break;
-    }
-    
-    this.widgets = this.widgets.filter(w => w.name === "group_id");
-    
-    const discoveredTags = new Set();
-    const regex = /\[\[(.*?):(.*?)\]\]/g;
 
-    // MODIFICATION N°2
-    for (const node of getAllNodesInGraph()) {
-        if (node.title) {
-            const allMatches = [...node.title.matchAll(regex)];
-            for (const match of allMatches) {
-                if (match[1] === groupID) {
-                    discoveredTags.add(match[2]);
-                }
-            }
-        }
-    }
+                const discoverAndBuildUI = () => {
+                    const groupID = this.properties.group_id;
+                    const isExclusiveMode = this.properties.node_mode;
+                    const settingsVisible = this.properties.show_settings;
 
-    const WORKFLOW_TAGS = Array.from(discoveredTags).sort();
-    
-    if (WORKFLOW_TAGS.length === 0) {
-        const currentWidth = this.size[0];
-        const newComputedSize = this.computeSize();
-        this.size = [currentWidth, newComputedSize[1]];
-        return;
-    }
+                    // On efface tout sauf le widget de base qui ne sera jamais créé ici
+                    this.widgets = [];
 
-    this.widgets.push({ name: "top_spacer", type: "CUSTOM_SPACER", draw: () => {}, computeSize: () => [0, 10] });
+                    // On recrée les widgets à chaque fois à partir de this.properties
+                    this.addWidget("toggle", "node_settings", settingsVisible, (value) => {
+                        this.properties.show_settings = value;
+                        discoverAndBuildUI();
+                    }, { on: "Hide Settings", off: "Show Settings" });
 
-    const handleToggleClick = (toggledTagName, isTurningOn) => {
-        let newSelectedTag = isTurningOn ? toggledTagName : null;
+                    if (settingsVisible) {
+                        this.addWidget("STRING", "group_id", groupID, (value) => {
+                            this.properties.group_id = value;
+                            discoverAndBuildUI();
+                        });
+                        this.addWidget("toggle", "node_mode", isExclusiveMode, (value) => {
+                        this.properties.node_mode = value;
+                        // Si on passe en mode exclusif, on désactive tout pour forcer un nouveau choix.
+                        if (value === true) {
+                            updateNodeStates(null, this.properties.group_id);
+                        }
+                        discoverAndBuildUI();
+                    }, { on: "Exclusive selection", off: "Multiple selection" });
+                    }
 
-        if (isTurningOn) {
-            for (const w of this.widgets) {
-                if (WORKFLOW_TAGS.includes(w.name) && w.name !== toggledTagName) { 
-                    w.value = false;
-                }
-            }
-        }
-        
-        updateNodeStates(newSelectedTag, groupID, WORKFLOW_TAGS);
-    };
+                    const activeTagsInGraph = new Set();
+                    if (groupID) {
+                        const regex = /\[\[(.*?):(.*?)\]\]/g;
+                        for (const node of getAllNodesInGraph()) {
+                            if (node.mode === 0 && node.title) {
+                                for (const match of node.title.matchAll(regex)) {
+                                    if (match[1] === groupID) activeTagsInGraph.add(match[2]);
+                                }
+                            }
+                        }
+                    }
 
-    // La création de vos widgets, conservée à l'identique
-    for (const tag of WORKFLOW_TAGS) {
-        this.addWidget("toggle", tag, false, (value) => { handleToggleClick(tag, value); });
-    }
+                    const discoveredTags = new Set();
+                    if (groupID) {
+                        const regex = /\[\[(.*?):(.*?)\]\]/g;
+                        for (const node of getAllNodesInGraph()) {
+                            if (node.title) {
+                                for (const match of [...node.title.matchAll(regex)]) {
+                                    if (match[1] === groupID) discoveredTags.add(match[2]);
+                                }
+                            }
+                        }
+                    }
 
-    // Votre logique de restauration, conservée à l'identique
-    if (activeTagInGraph) {
-        const widgetToActivate = this.widgets.find(w => w.name === activeTagInGraph);
-        if (widgetToActivate) {
-            widgetToActivate.value = true;
-        }
-    }
-    
-    const currentWidth = this.size[0];
-    const newComputedSize = this.computeSize();
-    this.size = [currentWidth, newComputedSize[1]];
-    
-    app.graph.setDirtyCanvas(true, true);
-};
+                    const WORKFLOW_TAGS = Array.from(discoveredTags).sort();
+                    if (WORKFLOW_TAGS.length > 0) {
+                        this.widgets.push({ name: "top_spacer", type: "CUSTOM_SPACER", draw: () => {}, computeSize: () => [0, 10] });
 
-                const groupIDWidget = this.addWidget("STRING", "group_id", "DEFAULT", discoverAndBuildUI);
+                        const handleToggleClick = (toggledTagName, isTurningOn) => {
+                            if (isExclusiveMode) {
+                                const newSelectedTag = isTurningOn ? toggledTagName : null;
+                                updateNodeStates(newSelectedTag, groupID);
+                            } else {
+                                const activeTags = WORKFLOW_TAGS.filter(tag => {
+                                    const w = this.widgets.find(w => w.name === tag);
+                                    if (!w) return false;
+                                    return (tag === toggledTagName) ? isTurningOn : w.value;
+                                });
+                                updateNodeStates(activeTags, groupID);
+                            }
+                            // Léger délai pour s'assurer que l'état du graphe est mis à jour avant de reconstruire l'UI
+                            setTimeout(() => discoverAndBuildUI(), 50);
+                        };
+
+                        for (const tag of WORKFLOW_TAGS) {
+                            this.addWidget("toggle", tag, activeTagsInGraph.has(tag), (value) => handleToggleClick(tag, value));
+                        }
+                    }
+
+                    // Redimensionnement correct, uniquement sur la hauteur
+                    const newComputedSize = this.computeSize();
+                    this.size = [this.size[0], newComputedSize[1]];
+                    app.graph.setDirtyCanvas(true, true);
+                };
                 
+                // Le premier appel pour construire l'interface
                 setTimeout(() => discoverAndBuildUI(), 100);
             };
 
@@ -151,18 +158,13 @@ app.registerExtension({
             nodeType.prototype.onDrawBackground = function(ctx) {
                 onDrawBackground?.apply(this, arguments);
                 let titlesSignature = "";
-                for(const node of getAllNodesInGraph()) {
-                    if(node.title?.includes('[[')) {
-                        titlesSignature += node.title;
-                    }
+                for (const node of getAllNodesInGraph()) {
+                    if (node.title?.includes('[[')) titlesSignature += node.title;
                 }
-                
                 if (this.lastKnownNodeTitles !== titlesSignature) {
                     this.lastKnownNodeTitles = titlesSignature;
-                    const groupIDWidget = this.widgets.find(w => w.name === "group_id");
-                    if(groupIDWidget?.callback) {
-                        groupIDWidget.callback(groupIDWidget.value);
-                    }
+                    // On peut simplement appeler le callback du premier widget (node_settings) pour tout reconstruire
+                    this.widgets[0]?.callback(this.widgets[0].value);
                 }
             };
         }
