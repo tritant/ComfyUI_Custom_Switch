@@ -1,8 +1,21 @@
 import { app } from "/scripts/app.js";
 
+function getAllNodesInGraph() {
+    const allNodes = [...app.graph._nodes];
+    
+    if (app.graph._subgraphs) {
+        for (const subgraph of app.graph._subgraphs.values()) {
+            //console.log(`[Orchestrator] Trouvé un Subgraph. Scan de ses ${subgraph.nodes.length} nœuds internes...`);
+            allNodes.push(...subgraph.nodes);
+        }
+    }
+    return allNodes;
+}
+
 function updateNodeStates(selectedTag, groupID, workflowTags) {
     const changesToApply = [];
-    for (const targetNode of app.graph.nodes) {
+	const dirtyGraphs = new Set([app.graph]);
+    for (const targetNode of getAllNodesInGraph()) {
         if (targetNode.type === "OrchestratorNodeMuter") continue;
         const title = targetNode.title || "";
         const match = title.match(/\[\[(.*?):(.*?)\]\]/g);
@@ -15,6 +28,9 @@ function updateNodeStates(selectedTag, groupID, workflowTags) {
                     const newMode = (selectedTag && nodeTag === selectedTag) ? 0 : 2;
                     if (targetNode.mode !== newMode) {
                         changesToApply.push({ node: targetNode, mode: newMode });
+						 if (targetNode.graph) {
+                            dirtyGraphs.add(targetNode.graph);
+                        }
                     }
                     break;
                 }
@@ -25,7 +41,9 @@ function updateNodeStates(selectedTag, groupID, workflowTags) {
         for (const change of changesToApply) {
             change.node.mode = change.mode;
         }
-        app.graph.setDirtyCanvas(true, true);
+		for (const graph of dirtyGraphs) {
+            graph.setDirtyCanvas(true, true);
+        }
     }
 }
 
@@ -49,7 +67,7 @@ app.registerExtension({
 					
                     let activeTagInGraph = null;
                     const regexForScan = /\[\[(.*?):(.*?)\]\]/g;
-                    for (const node of app.graph.nodes) {
+                    for (const node of getAllNodesInGraph()) {
                         if (node.mode === 0 && node.title) {
                             for (const match of node.title.matchAll(regexForScan)) {
                                 if (match[1] === groupID) {
@@ -66,7 +84,7 @@ app.registerExtension({
                     const discoveredTags = new Set();
                     const regex = /\[\[(.*?):(.*?)\]\]/g;
 
-                    for (const node of app.graph.nodes) {
+                    for (const node of getAllNodesInGraph()) {
                         if (node.title) {
                             const allMatches = [...node.title.matchAll(regex)];
                             for (const match of allMatches) {
@@ -122,7 +140,7 @@ app.registerExtension({
 
                 const groupIDWidget = this.addWidget("STRING", "group_id", "DEFAULT", discoverAndBuildUI);
                 
-                discoverAndBuildUI();
+                setTimeout(() => discoverAndBuildUI(), 100);
             };
 
             const onDrawBackground = nodeType.prototype.onDrawBackground;
@@ -130,7 +148,7 @@ app.registerExtension({
                 onDrawBackground?.apply(this, arguments);
 
                 let titlesSignature = "";
-                for(const node of app.graph.nodes) {
+                for(const node of getAllNodesInGraph()) {
                     if(node.title?.includes('[[')) {
                         titlesSignature += node.title;
                     }
